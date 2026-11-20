@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="color-scheme" content="light">
+<title>Arbre familial</title>
+<style>
+/*__CSS__*/
+</style>
+</head>
+<body>
+<header class="bar" id="topbar">
+  <h1 id="appTitle">Arbre familial</h1>
+  <div class="search" id="searchBox">
+    <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+    <input id="search" type="search" autocomplete="off" placeholder="Rechercher une personne…" aria-label="Rechercher une personne" aria-controls="searchResults">
+    <ul id="searchResults" role="listbox" hidden></ul>
+  </div>
+  <div class="actions">
+    <button id="btnUndo" class="tb" aria-label="Annuler" title="Annuler (Ctrl+Z)"><svg class="ic" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span>Annuler</span></button>
+    <button id="btnRedo" class="tb" aria-label="Rétablir" title="Rétablir (Ctrl+Y)"><svg class="ic" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg><span>Rétablir</span></button>
+    <button id="btnOpen" class="tb" aria-label="Ouvrir (JSON)"><svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Ouvrir (JSON)</span></button>
+    <button id="btnSave" class="tb" aria-label="Enregistrer (JSON)"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h12l4 4v12H4z"/><path d="M8 4v5h7V4M7 20v-6h10v6"/></svg><span>Enregistrer (JSON)</span></button>
+    <button id="btnExport" class="tb primary" aria-label="Exporter"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v3h16v-3"/></svg><span>Exporter</span></button>
+    <button id="btnSettings" class="tb" aria-label="Réglages"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Réglages</span></button>
+    <button id="btnHelp" class="tb" aria-label="Aide"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg><span>Aide</span></button>
+    <button id="btnMore" class="tb" aria-label="Menu" aria-haspopup="true" aria-expanded="false"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
+    <div id="moreMenu" class="menu" hidden role="menu">
+      <button role="menuitem" id="mOpen" class="narrow">Ouvrir (JSON)</button>
+      <button role="menuitem" id="mSave" class="narrow">Enregistrer (JSON)</button>
+      <button role="menuitem" id="mRedo" class="narrow">Rétablir</button>
+      <button role="menuitem" id="mSettings" class="narrow">Réglages</button>
+      <button role="menuitem" id="mHelp" class="narrow">Aide</button>
+      <button role="menuitem" id="btnFitMenu">Voir tout l’arbre</button>
+      <button role="menuitem" id="btnExample">Charger l’exemple (famille recomposée)</button>
+      <button role="menuitem" id="btnNew">Nouvel arbre</button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <canvas id="tree" tabindex="0" role="application" aria-label="Arbre familial. Flèches : naviguer entre les personnes, Entrée : modifier, + : ajouter un proche."></canvas>
+  <div id="live" class="sr" aria-live="polite"></div>
+  <div id="empty" class="empty" hidden>
+    <p id="emptyHint"></p>
+    <button id="btnFirst" class="big primary"></button>
+    <div class="row"><button id="btnExample2" class="big"></button><button id="btnOpen2" class="big"></button></div>
+  </div>
+  <div id="cardBar" class="cardbar" hidden role="toolbar" aria-label="Actions sur la personne">
+    <span id="cardBarName" class="name"></span>
+    <button id="cbEdit" class="cb"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="m12 8 4 4"/></svg><span>Modifier</span></button>
+    <button id="cbAdd" class="cb primary"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Ajouter</span></button>
+    <button id="cbCenter" class="cb"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg><span>Centrer</span></button>
+    <button id="cbCollapse" class="cb"><svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg><span></span></button>
+    <button id="cbClose" class="cb icon" aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="zoombar">
+    <button id="zIn" class="zb" aria-label="Zoom avant">+</button>
+    <button id="zOut" class="zb" aria-label="Zoom arrière">−</button>
+    <button id="zFit" class="zb" aria-label="Voir tout l’arbre"><svg class="ic" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="status"><span id="count"></span><span id="autosave" class="notice"></span></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+</main>
+
+<input type="file" id="fileJson" accept=".json,application/json" hidden>
+<input type="file" id="filePhoto" accept="image/*" hidden>
+<input type="file" id="filePhotoCam" accept="image/*" capture="environment" hidden>
+
+<!-- Add relative -->
+<dialog id="dlgAdd" aria-labelledby="dlgAddTitle">
+  <form id="formAdd" novalidate>
+    <h2 id="dlgAddTitle"></h2>
+    <fieldset class="rel"><legend id="relLegend"></legend>
+      <label class="relopt"><input type="radio" name="rel" value="child" checked><span><b id="lblChild"></b><small id="hintChild"></small></span></label>
+      <label class="relopt"><input type="radio" name="rel" value="partner"><span><b id="lblPartner"></b><small id="hintPartner"></small></span></label>
+      <label class="relopt"><input type="radio" name="rel" value="parent"><span><b id="lblParent"></b><small id="hintParent"></small></span></label>
+      <label class="relopt"><input type="radio" name="rel" value="sibling"><span><b id="lblSibling"></b><small id="hintSibling"></small></span></label>
+    </fieldset>
+    <div id="optChild" class="opts"><label><span id="lblWith"></span><select id="selUnion"></select></label><label class="chk"><input type="checkbox" id="chkAdopted"><span id="lblAdopted"></span></label></div>
+    <div id="optSibling" class="opts"><div id="sibChoices"></div><p id="sibNeed" class="warn" hidden></p></div>
+    <p id="parentFull" class="warn" hidden></p>
+    <div class="modeRow"><label class="chk"><input type="checkbox" id="chkExisting"><span id="lblExisting"></span></label></div>
+    <div id="existingBox" hidden><input type="search" id="existingSearch" autocomplete="off"><ul id="existingResults" role="listbox"></ul><input type="hidden" id="existingId"></div>
+    <div id="newBox">
+      <label><span id="lblFirst"></span><input id="aFirst" type="text" autocomplete="off" required autofocus enterkeyhint="done"></label>
+      <details id="aMore"><summary id="aMoreLbl"></summary>
+        <label><span id="lblLast"></span><input id="aLast" type="text" autocomplete="off"></label>
+        <div class="row2"><label><span id="lblBirth"></span><input id="aBirth" type="text" inputmode="numeric" autocomplete="off"></label><label><span id="lblDeath"></span><input id="aDeath" type="text" inputmode="numeric" autocomplete="off"></label></div>
+        <label><span id="lblPlace"></span><input id="aPlace" type="text" autocomplete="off"></label>
+        <p class="hint" id="aDateHint"></p>
+      </details>
+    </div>
+    <p id="aErr" class="err" role="alert" hidden></p>
+    <div class="btns"><button type="button" class="btn" id="aCancel"></button><button type="submit" class="btn primary" id="aSave"></button></div>
+  </form>
+</dialog>
+
+<!-- Edit person -->
+<dialog id="dlgEdit" aria-labelledby="dlgEditTitle">
+  <form id="formEdit" novalidate>
+    <h2 id="dlgEditTitle"></h2>
+    <div class="photoRow">
+      <div id="ePhoto" class="photoPreview" aria-hidden="true"></div>
+      <div class="col"><button type="button" class="btn" id="ePick"></button><button type="button" class="btn" id="eCam"></button><button type="button" class="btn" id="eRemovePhoto"></button></div>
+    </div>
+    <label><span id="elblFirst"></span><input id="eFirst" type="text" autocomplete="off" required></label>
+    <label><span id="elblLast"></span><input id="eLast" type="text" autocomplete="off"></label>
+    <div class="row2"><label><span id="elblBirth"></span><input id="eBirth" type="text" inputmode="numeric" autocomplete="off"></label><label><span id="elblDeath"></span><input id="eDeath" type="text" inputmode="numeric" autocomplete="off"></label></div>
+    <label><span id="elblPlace"></span><input id="ePlace" type="text" autocomplete="off"></label>
+    <label><span id="elblNotes"></span><textarea id="eNotes" rows="2"></textarea></label>
+    <p class="hint" id="eDateHint"></p>
+    <div id="eLinks" class="links"></div>
+    <p id="eErr" class="err" role="alert" hidden></p>
+    <div class="btns"><button type="button" class="btn danger" id="eDelete"></button><span class="sp"></span><button type="button" class="btn" id="eCancel"></button><button type="submit" class="btn primary" id="eSave"></button></div>
+  </form>
+</dialog>
+
+<!-- Confirm -->
+<dialog id="dlgConfirm" aria-labelledby="confirmTitle"><h2 id="confirmTitle"></h2><p id="confirmText"></p><div class="btns"><button class="btn" id="cCancel"></button><button class="btn danger" id="cOk"></button></div></dialog>
+
+<!-- Crop -->
+<dialog id="dlgCrop" aria-labelledby="cropTitle"><h2 id="cropTitle"></h2><p class="hint" id="cropHint"></p>
+  <div class="cropWrap"><canvas id="cropCanvas" width="280" height="280"></canvas></div>
+  <div class="row2"><label><span id="lblShape"></span><select id="cropShape"><option value="circle"></option><option value="square"></option></select></label><label><span id="lblZoom"></span><input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1"></label></div>
+  <div class="btns"><button class="btn" id="cropCancel"></button><button class="btn primary" id="cropOk"></button></div></dialog>
+
+<!-- Settings -->
+<dialog id="dlgSettings" aria-labelledby="setTitle"><form id="formSettings"><h2 id="setTitle"></h2>
+  <fieldset><legend id="lblTheme"></legend><label class="chk"><input type="radio" name="theme" value="modern"><span id="lblModern"></span></label><label class="chk"><input type="radio" name="theme" value="vintage"><span id="lblVintage"></span></label></fieldset>
+  <fieldset><legend id="lblFields"></legend>
+    <label class="chk"><input type="checkbox" id="sLast"><span id="lblSLast"></span></label>
+    <label class="chk"><input type="checkbox" id="sDates"><span id="lblSDates"></span></label>
+    <label class="chk"><input type="checkbox" id="sPlace"><span id="lblSPlace"></span></label>
+    <label class="chk"><input type="checkbox" id="sPhoto"><span id="lblSPhoto"></span></label>
+    <label class="chk"><input type="checkbox" id="sPlus"><span id="lblSPlus"></span></label>
+    <p class="hint" id="hiddenNote"></p></fieldset>
+  <label><span id="lblTitle"></span><input id="sTitle" type="text"></label>
+  <label><span id="lblSubtitle"></span><input id="sSubtitle" type="text"></label>
+  <div class="btns"><button type="button" class="btn primary" id="setClose"></button></div></form></dialog>
+
+<!-- Export -->
+<dialog id="dlgExport" aria-labelledby="expTitle"><form id="formExport"><h2 id="expTitle"></h2>
+  <div class="expGrid">
+    <div class="expOpts">
+      <fieldset><legend id="lblFormat"></legend><label class="chk"><input type="radio" name="fmt" value="png" checked><span>PNG</span></label><label class="chk"><input type="radio" name="fmt" value="pdf"><span>PDF</span></label><label class="chk"><input type="radio" name="fmt" value="svg"><span>SVG</span></label></fieldset>
+      <label><span id="lblPaper"></span><select id="xPaper"><option>A4</option><option>A3</option><option>A2</option><option selected>A1</option><option>A0</option><option value="custom" id="optCustom"></option></select></label>
+      <div class="row2" id="customSize" hidden><label><span id="lblWmm"></span><input id="xW" type="number" min="50" max="5000" value="500"></label><label><span id="lblHmm"></span><input id="xH" type="number" min="50" max="5000" value="700"></label></div>
+      <label><span id="lblOrient"></span><select id="xOrient"><option value="auto"></option><option value="portrait"></option><option value="landscape"></option></select></label>
+      <div class="row2"><label><span id="lblDpi"></span><select id="xDpi"><option>150</option><option selected>300</option><option>600</option></select></label><label><span id="lblMargin"></span><input id="xMargin" type="number" min="0" max="100" value="10"></label></div>
+      <label class="chk"><input type="checkbox" id="xTitle" checked><span id="lblIncTitle"></span></label>
+      <label><span id="lblXT"></span><input id="xTitleText" type="text"></label>
+      <label><span id="lblXS"></span><input id="xSubText" type="text"></label>
+    </div>
+    <div class="expPrev"><canvas id="prevCanvas"></canvas><p id="expInfo" class="hint"></p><p id="expWarn" class="warn" hidden></p><progress id="expProg" max="1" value="0" hidden></progress></div>
+  </div>
+  <div class="btns"><button type="button" class="btn" id="xClose"></button><button type="submit" class="btn primary" id="xGo"></button></div></form></dialog>
+
+<!-- Help -->
+<dialog id="dlgHelp" aria-labelledby="helpTitle"><h2 id="helpTitle"></h2><div id="helpBody" class="help"></div><div class="btns"><button class="btn primary" id="helpClose"></button></div></dialog>
+
+<script>
+/*__JS__*/
+</script>
+</body>
+</html>
