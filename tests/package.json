@@ -11,5 +11,8 @@
   "dependencies": {
     "pngjs": "^7.0.0",
     "puppeteer-core": "^24.43.1"
+  },
+  "devDependencies": {
+    "prettier": "^3.10.1"
   }
 }

@@ -245,9 +245,9 @@ async function loadImageFile(file) {
 }
 function cropPhoto(file, shape) { return new Promise(async (resolve) => {
   const img = await loadImageFile(file); const iw = img.width || img.naturalWidth, ih = img.height || img.naturalHeight; if (!iw || !ih) throw new Error('bad');
-  const d = $('dlgCrop'), cv = $('cropCanvas'), g = cv.getContext('2d'); const S = 280; const base = S / Math.min(iw, ih); let zoom = 1, ox = 0, oy = 0; $('cropZoom').value = 1; $('cropShape').value = shape || 'circle';
+  const d = $('dlgCrop'), cv = $('cropCanvas'), g = cv.getContext('2d'); const S = 280; const base = S / Math.min(iw, ih); let zoom = 1, ox = 0, oy = 0; $('cropZoom').value = 1; $('cropShape').value = 'square'; $('cropShape').closest('label').hidden = true;
   const draw = () => { const z = base * zoom; const w = iw * z, h = ih * z; ox = Math.max(Math.min(ox, 0), S - w); oy = Math.max(Math.min(oy, 0), S - h); g.fillStyle = '#222'; g.fillRect(0, 0, S, S); g.drawImage(img, ox, oy, w, h);
-    g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.rect(0, 0, S, S); if ($('cropShape').value === 'square') g.roundRect(6, 6, S - 12, S - 12, 8); else g.arc(S / 2, S / 2, S / 2 - 6, 0, Math.PI * 2, true); g.fill('evenodd'); };
+    g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.rect(0, 0, S, S); g.roundRect(6, 6, S - 12, S - 12, 8); g.fill('evenodd'); };
   ox = (S - iw * base) / 2; oy = (S - ih * base) / 2; draw();
   const pts = new Map(); let last = null, pinch0 = null;
   const onDown = (e) => { try { cv.setPointerCapture(e.pointerId); } catch (_) {} pts.set(e.pointerId, [e.offsetX, e.offsetY]); if (pts.size === 1) last = [e.offsetX, e.offsetY]; else if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: zoom }; } };

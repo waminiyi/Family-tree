@@ -37,8 +37,9 @@ class PdfG {
   text(str, x, y, o) { const f = o.font; const name = (f.bold ? 'B' : '') + (f.italic ? 'I' : '') || 'R'; this.fonts.add(name);
     let dx = 0; if (o.align === 'center') dx = -measure(str, f) / 2; else if (o.align === 'right') dx = -measure(str, f);
     this.c.push(`BT ${this._col(o.color, 'rg')}/F${name} ${pn(f.size)} Tf 1 0 0 -1 ${pn(x + dx)} ${pn(y)} Tm ${pdfStr(str)} Tj ET`); }
-  image(id, x, y, w, h, shape) { let im = this.images.get(id); if (!im) { im = { n: this.images.size + 1 }; this.images.set(id, im); }
-    this.c.push('q ' + (shape === 'square' ? this._roundRect(x, y, w, h, 4) : this._circle(x + w / 2, y + h / 2, w / 2)) + `W n ${pn(w)} 0 0 ${pn(-h)} ${pn(x)} ${pn(y + h)} cm /Im${im.n} Do Q`); }
+  _topRound(x, y, w, h, r) { r = Math.min(r || 0, w / 2, h / 2); const k = 0.5523 * r; return `${pn(x)} ${pn(y + h)} m ${pn(x)} ${pn(y + r)} l ${pn(x)} ${pn(y + r - k)} ${pn(x + r - k)} ${pn(y)} ${pn(x + r)} ${pn(y)} c ${pn(x + w - r)} ${pn(y)} l ${pn(x + w - r + k)} ${pn(y)} ${pn(x + w)} ${pn(y + r - k)} ${pn(x + w)} ${pn(y + r)} c ${pn(x + w)} ${pn(y + h)} l h `; }
+  image(id, x, y, w, h, shape, r) { let im = this.images.get(id); if (!im) { im = { n: this.images.size + 1 }; this.images.set(id, im); }
+    this.c.push('q ' + (shape === 'top' ? this._topRound(x, y, w, h, r) : shape === 'square' ? this._roundRect(x, y, w, h, 4) : this._circle(x + w / 2, y + h / 2, w / 2)) + `W n ${pn(w)} 0 0 ${pn(-h)} ${pn(x)} ${pn(y + h)} cm /Im${im.n} Do Q`); }
   async build(wPx, hPx) {
     const Wpt = wPx * 0.75, Hpt = hPx * 0.75;
     const objs = []; const add = (body) => { objs.push(body); return objs.length; };

@@ -4,7 +4,7 @@
 // in the gap between the two partners (or under a single parent). In-marrying
 // partners get their own parents/siblings attached above (ancestor attachment).
 // ---------------------------------------------------------------------------
-const LY = { W: 100, H: 124, Hnophoto: 62, Hphoto: 124, sep: 20, gapMin: 40, levelGap: 96, busOff: 50, laneStep: 10, bracketBase: 10, bracketStep: 9, rootSep: 110 };
+const LY = { W: 120, H: 176, Hnophoto: 62, Hphoto: 176, sep: 20, gapMin: 40, levelGap: 96, busOff: 60, laneStep: 10, bracketBase: 10, bracketStep: 9, rootSep: 130 };
 function pitch() { return LY.H + LY.levelGap; }
 function levelY(l) { return l * pitch(); }
 

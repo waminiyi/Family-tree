@@ -7,7 +7,7 @@ const THEMES = {
   vintage: { name: 'vintage', bg: '#e9dcbd', exportBg: '#f1e6cc', card: '#faf3e0', cardBorder: '#6e4b22', text: '#2b1a0a', text2: '#5a3e1f', line: '#5c3d18', lineW: 1.6,
     accent: '#8a2a1b', selectedBg: '#f3dfb6', font: 'Georgia, "Times New Roman", Times, serif', pdfFont: 'Times', radius: 3, nodeFill: '#faf3e0', photoBg: '#e3d3ab', frame: true, titleSize: 40, subtitleSize: 20, plus: '#8a2a1b' },
 };
-const PHOTO_D = 60; // photo diameter on card
+const PHOTO_D = 120; // photo size on card: full card width (= LY.W), square
 const FONT_NAME = 13, FONT_SMALL = 11;
 
 // --- text measuring (shared by all backends) ---------------------------------
@@ -39,7 +39,7 @@ function getPhoto(photos, id) {
   return e;
 }
 function smallPhoto(e) { // pre-rendered 2x version for screen drawing
-  if (!e.small) { const s = PHOTO_D * 2; const c = document.createElement('canvas'); c.width = s; c.height = s; const g = c.getContext('2d'); g.drawImage(e.img, 0, 0, s, s); e.small = c; }
+  if (!e.small) { const s = PHOTO_D * 3; const c = document.createElement('canvas'); c.width = s; c.height = s; const g = c.getContext('2d'); g.drawImage(e.img, 0, 0, s, s); e.small = c; }
   return e.small;
 }
 
@@ -55,9 +55,9 @@ class CanvasG {
   }
   flush() { const c = this.ctx; c.lineCap = 'round'; c.lineJoin = 'round'; for (const b of this.batches.values()) { c.strokeStyle = b.o.stroke; c.lineWidth = b.o.lw; c.setLineDash(b.o.dash || []); c.stroke(b.p); } c.setLineDash([]); this.batches.clear(); }
   text(str, x, y, o) { const c = this.ctx; c.font = fontStr(o.font); c.fillStyle = o.color; c.textAlign = o.align || 'left'; c.textBaseline = 'alphabetic'; c.fillText(str, x, y); }
-  image(id, x, y, w, h, shape) {
+  image(id, x, y, w, h, shape, r) {
     const e = getPhoto(this.photos, id); const c = this.ctx;
-    c.save(); c.beginPath(); if (shape === 'square') c.roundRect(x, y, w, h, 4); else c.arc(x + w / 2, y + h / 2, w / 2, 0, Math.PI * 2); c.clip();
+    c.save(); c.beginPath(); if (shape === 'top') c.roundRect(x, y, w, h, [r || 0, r || 0, 0, 0]); else if (shape === 'square') c.roundRect(x, y, w, h, 4); else c.arc(x + w / 2, y + h / 2, w / 2, 0, Math.PI * 2); c.clip();
     if (e.ready) { if (this.hiRes) c.drawImage(e.img, x, y, w, h); else c.drawImage(smallPhoto(e), x, y, w, h); } else { c.fillStyle = '#d4d8de'; c.fillRect(x, y, w, h); }
     c.restore();
   }
@@ -74,8 +74,8 @@ class SvgG {
   flush() {}
   text(str, x, y, o) { const f = o.font; const anchor = o.align === 'center' ? 'middle' : o.align === 'right' ? 'end' : 'start';
     this.out.push(`<text x="${nf(x)}" y="${nf(y)}" font-family="${esc(f.family)}" font-size="${f.size}"${f.bold ? ' font-weight="bold"' : ''}${f.italic ? ' font-style="italic"' : ''} fill="${o.color}" text-anchor="${anchor}">${esc(str)}</text>`); }
-  image(id, x, y, w, h, shape) { const cid = 'c' + (++this.clipN);
-    this.defs.push(`<clipPath id="${cid}">${shape === 'square' ? `<rect x="${nf(x)}" y="${nf(y)}" width="${nf(w)}" height="${nf(h)}" rx="4"/>` : `<circle cx="${nf(x + w / 2)}" cy="${nf(y + h / 2)}" r="${nf(w / 2)}"/>`}</clipPath>`);
+  image(id, x, y, w, h, shape, r) { const cid = 'c' + (++this.clipN); r = r || 0;
+    this.defs.push(`<clipPath id="${cid}">${shape === 'top' ? `<path d="M${nf(x)},${nf(y + h)} L${nf(x)},${nf(y + r)} Q${nf(x)},${nf(y)} ${nf(x + r)},${nf(y)} L${nf(x + w - r)},${nf(y)} Q${nf(x + w)},${nf(y)} ${nf(x + w)},${nf(y + r)} L${nf(x + w)},${nf(y + h)} Z"/>` : shape === 'square' ? `<rect x="${nf(x)}" y="${nf(y)}" width="${nf(w)}" height="${nf(h)}" rx="4"/>` : `<circle cx="${nf(x + w / 2)}" cy="${nf(y + h / 2)}" r="${nf(w / 2)}"/>`}</clipPath>`);
     this.out.push(`<image x="${nf(x)}" y="${nf(y)}" width="${nf(w)}" height="${nf(h)}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${cid})" href="${this.photos[id]}"/>`); }
   toString(w, h, bg) { return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${nf(w)}" height="${nf(h)}" viewBox="0 0 ${nf(w)} ${nf(h)}">\n<defs>${this.defs.join('')}</defs>\n<rect width="100%" height="100%" fill="${bg}"/>\n${this.out.join('\n')}\n</svg>`; }
 }
@@ -119,10 +119,12 @@ function drawScene(G, lay, st, idx, o) {
     if (lod === 1) { const f = { size: 16, bold: true, family: T.font }; G.text(ellipsize([p.first, s.showLastName ? p.last : ''].filter(Boolean).join(' '), f, W - 16), n.cx, n.cy + 6, { font: f, color: T.text, align: 'center' }); continue; }
     const lines = cardLines(p, s); const lh = 13; const total = lines.length * lh - 2; let y;
     const tw = W - 6;
-    if (s.showPhoto) { const d = PHOTO_D; const px = n.cx - d / 2, py = n.y + 7;
-      if (p.photo && st.photos[p.photo]) { G.image(p.photo, px, py, d, d, p.photoShape); if (T.frame) { if (p.photoShape === 'square') G.rect(px - 1, py - 1, d + 2, d + 2, { stroke: T.cardBorder, lw: 0.8, r: 5 }); else G.circle(n.cx, py + d / 2, d / 2 + 1, { stroke: T.cardBorder, lw: 0.8 }); } }
-      else { G.circle(n.cx, py + d / 2, d / 2, { fill: T.photoBg, stroke: T.frame ? T.cardBorder : null, lw: 0.8 }); const f = { size: 22, bold: true, family: T.font }; G.text(((p.first[0] || '') + (p.last[0] || '')).toUpperCase(), n.cx, py + d / 2 + 8, { font: f, color: T.text2, align: 'center' }); }
-      y = py + d + 5 + 11 + Math.max(0, (H - (py + d + 5 - n.y) - 6 - total) / 2);
+    if (s.showPhoto) { const d = W, R = T.radius;
+      if (p.photo && st.photos[p.photo]) G.image(p.photo, n.x, n.y, d, d, 'top', R);
+      else { G.rect(n.x, n.y, d, d, { fill: T.photoBg, r: R }); G.rect(n.x, n.y + R, d, d - R, { fill: T.photoBg }); const f = { size: 44, bold: true, family: T.font }; G.text(((p.first[0] || '') + (p.last[0] || '')).toUpperCase(), n.cx, n.y + d / 2 + 15, { font: f, color: T.text2, align: 'center' }); }
+      G.path([[n.x, n.y + d], [n.x + W, n.y + d]], { stroke: T.cardBorder, lw: T.frame ? 0.8 : 0.6 });
+      G.rect(n.x, n.y, W, H, { stroke: sel ? T.accent : T.cardBorder, lw: sel ? 2.5 : 1, r: R });
+      y = n.y + d + 4 + 11 + Math.max(0, (H - d - 4 - 5 - total) / 2);
     } else y = n.y + (H - total) / 2 + 11;
     for (const ln of lines) { const f = ln.bold ? fName : ln.italic ? fSmallI : ln.caps ? fCaps : fSmall; const txt = ln.caps && T.name === 'vintage' ? ln.t.toUpperCase() : ln.t;
       G.text(ellipsize(txt, f, tw), n.cx, y, { font: f, color: ln.bold ? T.text : T.text2, align: 'center' }); y += lh; }
